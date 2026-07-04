@@ -97,18 +97,20 @@ export default function SongCard({ song, isAdmin, onEdit, onDelete }: SongCardPr
         </div>
 
         {/* Action button: Reference Link */}
-        <div className="mb-4">
-          <a
-            href={song.link}
-            target="_blank"
-            referrerPolicy="no-referrer"
-            className={`inline-flex items-center space-x-2 w-full justify-center px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${linkDetails.colorClass}`}
-            id={`reference-link-${song.id}`}
-          >
-            {linkDetails.icon}
-            <span>{linkDetails.label}</span>
-          </a>
-        </div>
+        {song.link && song.link.trim() !== "" && (
+          <div className="mb-4">
+            <a
+              href={song.link}
+              target="_blank"
+              referrerPolicy="no-referrer"
+              className={`inline-flex items-center space-x-2 w-full justify-center px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${linkDetails.colorClass}`}
+              id={`reference-link-${song.id}`}
+            >
+              {linkDetails.icon}
+              <span>{linkDetails.label}</span>
+            </a>
+          </div>
+        )}
 
         {/* Collapsible Lyrics Area */}
         <div className="mt-2 border-t border-gray-100 pt-3">

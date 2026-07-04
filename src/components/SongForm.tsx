@@ -36,13 +36,13 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
     e.preventDefault();
     setError("");
 
-    if (!title.trim() || !ministry.trim() || !link.trim() || !lyrics.trim()) {
-      setError("Por favor, preencha todos os campos do formulário.");
+    if (!title.trim() || !ministry.trim() || !lyrics.trim()) {
+      setError("Por favor, preencha o Nome da Música, Ministério e a Letra.");
       return;
     }
 
-    // Validate link URL structure
-    if (!link.startsWith("http://") && !link.startsWith("https://")) {
+    // Validate link URL structure only if provided
+    if (link.trim() && !link.startsWith("http://") && !link.startsWith("https://")) {
       setError("O link de referência deve ser uma URL válida começando com http:// ou https://");
       return;
     }
@@ -51,7 +51,7 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
       await onSubmit({
         title: title.trim(),
         ministry: ministry.trim(),
-        link: link.trim(),
+        link: link.trim() || "",
         lyrics: lyrics.trim(),
       });
       
@@ -130,12 +130,12 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
         {/* Link de Referência */}
         <div>
           <label htmlFor="form-link" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-            Link de Referência (YouTube ou Spotify)
+            Link de Referência (YouTube, Spotify ou Letras.mus) <span className="text-gray-400 font-normal lowercase">(opcional)</span>
           </label>
           <input
             type="url"
             id="form-link"
-            placeholder="Ex: https://www.youtube.com/watch?v=..."
+            placeholder="Ex: https://www.youtube.com/watch?v=... ou link de letras"
             value={link}
             onChange={(e) => setLink(e.target.value)}
             disabled={isSubmitting}
@@ -150,7 +150,7 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
           </label>
           <textarea
             id="form-lyrics"
-            rows={8}
+            rows={10}
             placeholder="Digite ou cole a letra completa da música aqui..."
             value={lyrics}
             onChange={(e) => setLyrics(e.target.value)}

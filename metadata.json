@@ -1,6 +1,6 @@
 {
-  "name": "MeuLouvor",
-  "description": "Catálogo musical para o Ministério de Louvor, com busca rápida pública de letras e gerenciamento administrativo de repertório.",
+  "name": "BuscarLouvor",
+  "description": "Catálogo musical colaborativo para Ministério de Louvor, com busca rápida de letras, acesso por cadastro de conta e gerenciamento de repertório.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
