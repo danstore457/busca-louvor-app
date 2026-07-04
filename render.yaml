@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: buscalouvor
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Você irá colar a URL do seu banco de dados Neon aqui no painel da Render
