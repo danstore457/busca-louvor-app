@@ -138,7 +138,7 @@ async function startServer() {
 
   // 6. Create song (any logged in user can add)
   app.post("/api/songs", requireAuth, async (req: any, res) => {
-    const { title, ministry, link, lyrics } = req.body;
+    const { title, ministry, link, playbackLink, lyrics } = req.body;
     if (!title || !ministry || !lyrics) {
       return res.status(400).json({ error: "Título, Ministério e Letra são obrigatórios." });
     }
@@ -147,6 +147,7 @@ async function startServer() {
         title, 
         ministry, 
         link: link || "", 
+        playbackLink: playbackLink || "",
         lyrics, 
         userId: req.user.id, 
         userName: req.user.name 
@@ -160,12 +161,13 @@ async function startServer() {
   // 7. Update song (Admin only)
   app.put("/api/songs/:id", requireAdmin, async (req, res) => {
     const { id } = req.params;
-    const { title, ministry, link, lyrics } = req.body;
+    const { title, ministry, link, playbackLink, lyrics } = req.body;
     try {
       const success = await db.updateSong(id, { 
         title, 
         ministry, 
         link: link || "", 
+        playbackLink: playbackLink || "",
         lyrics 
       });
       if (success) {

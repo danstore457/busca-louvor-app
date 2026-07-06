@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Search, Music, Sparkles, X, CheckCircle2, AlertCircle, Plus, Users, ShieldAlert, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Search, Music, Sparkles, X, CheckCircle2, AlertCircle, Plus, Users, ShieldAlert, Lock, ArrowRight, Eye, EyeOff, RotateCw } from "lucide-react";
 import { Song, UserSession } from "./types.ts";
 import Header from "./components/Header.tsx";
 import SongCard from "./components/SongCard.tsx";
@@ -18,6 +18,7 @@ export default function App() {
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [songToDelete, setSongToDelete] = useState<Song | null>(null);
+  const [typeFilter, setTypeFilter] = useState<"all" | "cantado" | "playback">("all");
   
   // Tab switching for Admin: 'songs' | 'users'
   const [activeTab, setActiveTab] = useState<"songs" | "users">("songs");
@@ -28,6 +29,7 @@ export default function App() {
 
   // Loading & Error States
   const [isLoading, setIsLoading] = useState(true);
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -80,6 +82,7 @@ export default function App() {
   // Fetch list of registered users (Admin only)
   const fetchAdminUsers = async () => {
     if (!session || !session.isAdmin) return;
+    setIsUsersLoading(true);
     try {
       const response = await fetch("/api/admin/users", {
         headers: {
@@ -97,6 +100,8 @@ export default function App() {
       }
     } catch (e) {
       console.error("Erro ao carregar lista de usuários para admin", e);
+    } finally {
+      setIsUsersLoading(false);
     }
   };
 
@@ -288,18 +293,26 @@ export default function App() {
     }
   };
 
-  // Real-time filter mechanism (Nome, Ministério/Comunidade, ou qualquer palavra na Letra)
+  // Real-time filter mechanism (Nome, Ministério/Comunidade, ou qualquer palavra na Letra, mais filtro de tipo)
   const filteredSongs = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return songs;
+    let result = songs;
 
-    return songs.filter((song) => {
+    if (typeFilter === "cantado") {
+      result = result.filter(song => song.link && song.link.trim() !== "");
+    } else if (typeFilter === "playback") {
+      result = result.filter(song => song.playbackLink && song.playbackLink.trim() !== "");
+    }
+
+    if (!query) return result;
+
+    return result.filter((song) => {
       const matchTitle = song.title.toLowerCase().includes(query);
       const matchMinistry = song.ministry.toLowerCase().includes(query);
       const matchLyrics = song.lyrics.toLowerCase().includes(query);
       return matchTitle || matchMinistry || matchLyrics;
     });
-  }, [songs, searchQuery]);
+  }, [songs, searchQuery, typeFilter]);
 
   // RENDER LANDING PAGE IF NOT AUTHENTICATED
   if (!session) {
@@ -510,7 +523,7 @@ export default function App() {
 
             {/* Dynamic Live Search Section */}
             <section className="mb-6" id="search-section">
-              <div className="relative max-w-2xl mx-auto">
+              <div className="relative max-w-2xl mx-auto mb-4">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                   <Search className="h-5 w-5 text-slate-400" />
                 </div>
@@ -532,6 +545,44 @@ export default function App() {
                   </button>
                 )}
               </div>
+
+              {/* Filtros de Tipo (Todas, Cantada, Playback) */}
+              <div className="flex justify-center items-center gap-2 max-w-2xl mx-auto flex-wrap mb-4">
+                <button
+                  type="button"
+                  onClick={() => setTypeFilter("all")}
+                  className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
+                    typeFilter === "all"
+                      ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                      : "bg-white text-slate-600 border-gray-200 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  Todas ({songs.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTypeFilter("cantado")}
+                  className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
+                    typeFilter === "cantado"
+                      ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                      : "bg-white text-slate-600 border-gray-200 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  Versão Cantada ({songs.filter(s => s.link && s.link.trim() !== "").length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTypeFilter("playback")}
+                  className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
+                    typeFilter === "playback"
+                      ? "bg-slate-900 text-white border-slate-900 shadow-xs"
+                      : "bg-white text-slate-600 border-gray-200 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  Playback ({songs.filter(s => s.playbackLink && s.playbackLink.trim() !== "").length})
+                </button>
+              </div>
+
               {searchQuery && (
                 <div className="text-center mt-3">
                   <p className="text-xs font-medium text-slate-500">
@@ -729,10 +780,15 @@ export default function App() {
                   </p>
                 </div>
                 <button
-                  onClick={fetchAdminUsers}
-                  className="text-xs font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                  onClick={async () => {
+                    await fetchAdminUsers();
+                    showToast("Lista de usuários atualizada com sucesso!", "success");
+                  }}
+                  disabled={isUsersLoading}
+                  className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 px-3 py-1.5 rounded-lg transition cursor-pointer"
                 >
-                  Atualizar Lista
+                  <RotateCw className={`h-3 w-3 text-slate-600 ${isUsersLoading ? "animate-spin" : ""}`} />
+                  <span>{isUsersLoading ? "Sincronizando..." : "Atualizar Lista"}</span>
                 </button>
               </div>
 

@@ -1,0 +1,11 @@
+[
+  {
+    "id": "admin-buscarlouvor",
+    "name": "Administrador",
+    "email": "adminbuscarlouvor@gmail.com",
+    "password": "9399666703Adm",
+    "isBlocked": false,
+    "isAdmin": true,
+    "createdAt": "2026-07-06T14:02:56.276Z"
+  }
+]

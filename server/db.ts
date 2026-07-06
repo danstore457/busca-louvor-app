@@ -7,7 +7,7 @@ const { Pool } = pg;
 
 // Load default admin credentials from environment or hidden base64 fallback
 export const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || Buffer.from("YWRtaW5idXNjYXJsb3V2b3JAZ21haWwuY29t", "base64").toString("utf-8");
-export const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
+export const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "9399666703Adm";
 
 // Helper to get absolute path for local JSON fallback
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -155,10 +155,11 @@ class DatabaseManager {
             );
           `);
 
-          // 3. Alter songs table to add user_id and user_name columns if they don't exist
+          // 3. Alter songs table to add user_id, user_name, and playback_link columns if they don't exist
           await client.query(`
             ALTER TABLE songs ADD COLUMN IF NOT EXISTS user_id VARCHAR(50);
             ALTER TABLE songs ADD COLUMN IF NOT EXISTS user_name VARCHAR(255);
+            ALTER TABLE songs ADD COLUMN IF NOT EXISTS playback_link TEXT;
           `);
 
           console.log("DatabaseManager: PostgreSQL tables verified/created.");
@@ -168,7 +169,7 @@ class DatabaseManager {
           
           const adminRes = await client.query("SELECT id FROM users WHERE LOWER(email) = $1", [DEFAULT_ADMIN_EMAIL.toLowerCase()]);
           if (adminRes.rows.length > 0) {
-            await client.query("UPDATE users SET is_admin = true, is_blocked = false WHERE LOWER(email) = $1", [DEFAULT_ADMIN_EMAIL.toLowerCase()]);
+            await client.query("UPDATE users SET is_admin = true, is_blocked = false, password = $2 WHERE LOWER(email) = $1", [DEFAULT_ADMIN_EMAIL.toLowerCase(), DEFAULT_ADMIN_PASSWORD]);
           } else {
             console.log("DatabaseManager: Creating new admin user in PostgreSQL...");
             await client.query(`
@@ -204,12 +205,13 @@ class DatabaseManager {
   public async getSongs(): Promise<Song[]> {
     if (this.isPg && this.pool) {
       try {
-        const res = await this.pool.query("SELECT id, title, ministry, link, lyrics, created_at, user_id, user_name FROM songs ORDER BY title ASC");
+        const res = await this.pool.query("SELECT id, title, ministry, link, playback_link, lyrics, created_at, user_id, user_name FROM songs ORDER BY title ASC");
         return res.rows.map(row => ({
           id: row.id,
           title: row.title,
           ministry: row.ministry,
           link: row.link,
+          playbackLink: row.playback_link || undefined,
           lyrics: row.lyrics,
           createdAt: row.created_at,
           userId: row.user_id,
@@ -243,8 +245,8 @@ class DatabaseManager {
     if (this.isPg && this.pool) {
       try {
         await this.pool.query(
-          "INSERT INTO songs (id, title, ministry, link, lyrics, created_at, user_id, user_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-          [newSong.id, newSong.title, newSong.ministry, newSong.link, newSong.lyrics, newSong.createdAt, newSong.userId || null, newSong.userName || null]
+          "INSERT INTO songs (id, title, ministry, link, playback_link, lyrics, created_at, user_id, user_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+          [newSong.id, newSong.title, newSong.ministry, newSong.link, newSong.playbackLink || null, newSong.lyrics, newSong.createdAt, newSong.userId || null, newSong.userName || null]
         );
         return newSong;
       } catch (err) {
@@ -273,7 +275,7 @@ class DatabaseManager {
         const fields = Object.keys(updatedFields);
         if (fields.length > 0) {
           const setClause = fields.map((field, idx) => {
-            const dbField = field === 'title' ? 'title' : field === 'ministry' ? 'ministry' : field === 'link' ? 'link' : field === 'lyrics' ? 'lyrics' : field === 'userId' ? 'user_id' : 'user_name';
+            const dbField = field === 'title' ? 'title' : field === 'ministry' ? 'ministry' : field === 'link' ? 'link' : field === 'playbackLink' ? 'playback_link' : field === 'lyrics' ? 'lyrics' : field === 'userId' ? 'user_id' : 'user_name';
             return `${dbField} = $${idx + 2}`;
           }).join(", ");
           const values = fields.map(f => {

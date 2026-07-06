@@ -26,30 +26,29 @@ export default function SongCard({ song, isAdmin, onEdit, onDelete }: SongCardPr
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Parse reference link to detect brand identity
-  const getLinkDetails = (url: string) => {
+  const getLinkDetails = (url: string, isPlayback: boolean) => {
     const normalized = url.toLowerCase();
+    const defaultLabel = isPlayback ? "Ouvir Playback" : "Versão Cantada";
     if (normalized.includes("youtube.com") || normalized.includes("youtu.be")) {
       return {
-        label: "Assistir no YouTube",
+        label: isPlayback ? "Playback no YouTube" : "Cantado no YouTube",
         colorClass: "bg-[#FF0000] hover:bg-[#E60000] text-white focus:ring-[#FF0000]/50",
         icon: <Youtube className="h-4 w-4" />
       };
     } else if (normalized.includes("spotify.com")) {
       return {
-        label: "Ouvir no Spotify",
+        label: isPlayback ? "Playback no Spotify" : "Cantado no Spotify",
         colorClass: "bg-[#1DB954] hover:bg-[#1AA34A] text-white focus:ring-[#1DB954]/50",
         icon: <SpotifyIcon className="h-4 w-4" />
       };
     } else {
       return {
-        label: "Ver Referência",
+        label: defaultLabel,
         colorClass: "bg-slate-700 hover:bg-slate-800 text-white focus:ring-slate-700/50",
         icon: <ExternalLink className="h-4 w-4" />
       };
     }
   };
-
-  const linkDetails = getLinkDetails(song.link);
 
   return (
     <motion.div
@@ -71,6 +70,19 @@ export default function SongCard({ song, isAdmin, onEdit, onDelete }: SongCardPr
             <p className="text-xs sm:text-sm font-medium text-slate-500 truncate" title={song.ministry}>
               {song.ministry}
             </p>
+            {/* Badges indicando tipo de louvor */}
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap" id={`badges-container-${song.id}`}>
+              {song.playbackLink && song.playbackLink.trim() !== "" && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-2xs">
+                  Playback
+                </span>
+              )}
+              {song.link && song.link.trim() !== "" && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-2xs">
+                  Cantado
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Admin controls */}
@@ -96,19 +108,33 @@ export default function SongCard({ song, isAdmin, onEdit, onDelete }: SongCardPr
           )}
         </div>
 
-        {/* Action button: Reference Link */}
-        {song.link && song.link.trim() !== "" && (
-          <div className="mb-4">
-            <a
-              href={song.link}
-              target="_blank"
-              referrerPolicy="no-referrer"
-              className={`inline-flex items-center space-x-2 w-full justify-center px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${linkDetails.colorClass}`}
-              id={`reference-link-${song.id}`}
-            >
-              {linkDetails.icon}
-              <span>{linkDetails.label}</span>
-            </a>
+        {/* Action buttons: Reference Links */}
+        {((song.link && song.link.trim() !== "") || (song.playbackLink && song.playbackLink.trim() !== "")) && (
+          <div className="flex flex-col gap-2 mb-4">
+            {song.link && song.link.trim() !== "" && (
+              <a
+                href={song.link}
+                target="_blank"
+                referrerPolicy="no-referrer"
+                className={`inline-flex items-center space-x-2 w-full justify-center px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${getLinkDetails(song.link, false).colorClass}`}
+                id={`reference-link-${song.id}`}
+              >
+                {getLinkDetails(song.link, false).icon}
+                <span>{getLinkDetails(song.link, false).label}</span>
+              </a>
+            )}
+            {song.playbackLink && song.playbackLink.trim() !== "" && (
+              <a
+                href={song.playbackLink}
+                target="_blank"
+                referrerPolicy="no-referrer"
+                className={`inline-flex items-center space-x-2 w-full justify-center px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${getLinkDetails(song.playbackLink, true).colorClass}`}
+                id={`playback-link-${song.id}`}
+              >
+                {getLinkDetails(song.playbackLink, true).icon}
+                <span>{getLinkDetails(song.playbackLink, true).label}</span>
+              </a>
+            )}
           </div>
         )}
 

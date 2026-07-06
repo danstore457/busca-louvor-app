@@ -61,7 +61,13 @@ npm start
 
 O projeto funciona perfeitamente sem nenhuma configuração inicial usando armazenamento JSON local. Para conectar a um banco de dados PostgreSQL real em produção, basta criar um arquivo `.env` na raiz do projeto e definir:
 
-
+```env
+DATABASE_URL=postgres://usuario:senha@host:porta/banco_de_dados
+```
 
 ---
 
+## 🔑 Credenciais Padrão de Teste (Administrador)
+
+*   **E-mail**: `louvor@igreja.com`
+*   **Senha**: `louvor123`

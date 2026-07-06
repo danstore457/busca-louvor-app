@@ -13,6 +13,8 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
   const [title, setTitle] = useState("");
   const [ministry, setMinistry] = useState("");
   const [link, setLink] = useState("");
+  const [playbackLink, setPlaybackLink] = useState("");
+  const [songType, setSongType] = useState<"cantado" | "playback">("cantado");
   const [lyrics, setLyrics] = useState("");
   const [error, setError] = useState("");
 
@@ -21,12 +23,22 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
     if (editingSong) {
       setTitle(editingSong.title);
       setMinistry(editingSong.ministry);
-      setLink(editingSong.link);
+      const urlLink = editingSong.link || "";
+      const urlPlayback = editingSong.playbackLink || "";
+      setLink(urlLink);
+      setPlaybackLink(urlPlayback);
+      if (urlPlayback.trim() !== "" && !urlLink.trim()) {
+        setSongType("playback");
+      } else {
+        setSongType("cantado");
+      }
       setLyrics(editingSong.lyrics);
     } else {
       setTitle("");
       setMinistry("");
       setLink("");
+      setPlaybackLink("");
+      setSongType("cantado");
       setLyrics("");
     }
     setError("");
@@ -41,9 +53,17 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
       return;
     }
 
-    // Validate link URL structure only if provided
-    if (link.trim() && !link.startsWith("http://") && !link.startsWith("https://")) {
-      setError("O link de referência deve ser uma URL válida começando com http:// ou https://");
+    const finalLink = songType === "cantado" ? link.trim() : "";
+    const finalPlaybackLink = songType === "playback" ? playbackLink.trim() : "";
+
+    // Validate link URL structure only if provided and checked
+    if (songType === "cantado" && finalLink && !finalLink.startsWith("http://") && !finalLink.startsWith("https://")) {
+      setError("O link de referência da versão cantada deve ser uma URL válida começando com http:// ou https://");
+      return;
+    }
+
+    if (songType === "playback" && finalPlaybackLink && !finalPlaybackLink.startsWith("http://") && !finalPlaybackLink.startsWith("https://")) {
+      setError("O link de referência do playback deve ser uma URL válida começando com http:// ou https://");
       return;
     }
 
@@ -51,7 +71,8 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
       await onSubmit({
         title: title.trim(),
         ministry: ministry.trim(),
-        link: link.trim() || "",
+        link: finalLink,
+        playbackLink: finalPlaybackLink,
         lyrics: lyrics.trim(),
       });
       
@@ -60,6 +81,8 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
         setTitle("");
         setMinistry("");
         setLink("");
+        setPlaybackLink("");
+        setSongType("cantado");
         setLyrics("");
       }
     } catch (err: any) {
@@ -127,20 +150,91 @@ export default function SongForm({ editingSong, onSubmit, onCancel, isSubmitting
           />
         </div>
 
-        {/* Link de Referência */}
+        {/* Seleção do Tipo de Música / Link */}
         <div>
-          <label htmlFor="form-link" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-            Link de Referência (YouTube, Spotify ou Letras.mus) <span className="text-gray-400 font-normal lowercase">(opcional)</span>
-          </label>
-          <input
-            type="url"
-            id="form-link"
-            placeholder="Ex: https://www.youtube.com/watch?v=... ou link de letras"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            disabled={isSubmitting}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-xs focus:border-slate-800 focus:outline-hidden focus:ring-1 focus:ring-slate-800 disabled:bg-slate-50 transition"
-          />
+          <span className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+            Disponível em:
+          </span>
+          <div className="grid grid-cols-2 gap-4">
+            <label 
+              className={`flex items-center space-x-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                songType === "cantado" 
+                  ? "border-slate-900 bg-slate-900/5 text-slate-900 font-semibold" 
+                  : "border-gray-200 bg-white text-slate-500 hover:border-gray-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="songType"
+                value="cantado"
+                checked={songType === "cantado"}
+                onChange={() => {
+                  setSongType("cantado");
+                  setPlaybackLink("");
+                }}
+                className="rounded-full border-gray-300 text-slate-900 focus:ring-slate-900 h-4.5 w-4.5 cursor-pointer"
+              />
+              <span className="text-xs sm:text-sm">Versão Cantada</span>
+            </label>
+
+            <label 
+              className={`flex items-center space-x-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                songType === "playback" 
+                  ? "border-slate-900 bg-slate-900/5 text-slate-900 font-semibold" 
+                  : "border-gray-200 bg-white text-slate-500 hover:border-gray-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="songType"
+                value="playback"
+                checked={songType === "playback"}
+                onChange={() => {
+                  setSongType("playback");
+                  setLink("");
+                }}
+                className="rounded-full border-gray-300 text-slate-900 focus:ring-slate-900 h-4.5 w-4.5 cursor-pointer"
+              />
+              <span className="text-xs sm:text-sm">Playback</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Links de Referência (Condicionais) */}
+        <div className="grid grid-cols-1 gap-4">
+          {songType === "cantado" && (
+            <div className="animate-fadeIn">
+              <label htmlFor="form-link" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Link da Versão Cantada <span className="text-gray-400 font-normal lowercase">(opcional)</span>
+              </label>
+              <input
+                type="url"
+                id="form-link"
+                placeholder="Ex: https://www.youtube.com/watch?v=..."
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-xs focus:border-slate-800 focus:outline-hidden focus:ring-1 focus:ring-slate-800 disabled:bg-slate-50 transition"
+              />
+            </div>
+          )}
+
+          {songType === "playback" && (
+            <div className="animate-fadeIn">
+              <label htmlFor="form-playback-link" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Link do Playback / Instrumental <span className="text-gray-400 font-normal lowercase">(opcional)</span>
+              </label>
+              <input
+                type="url"
+                id="form-playback-link"
+                placeholder="Ex: https://www.youtube.com/watch?v=... playback"
+                value={playbackLink}
+                onChange={(e) => setPlaybackLink(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-xs focus:border-slate-800 focus:outline-hidden focus:ring-1 focus:ring-slate-800 disabled:bg-slate-50 transition"
+              />
+            </div>
+          )}
         </div>
 
         {/* Letra da Música */}

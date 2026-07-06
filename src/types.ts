@@ -3,6 +3,7 @@ export interface Song {
   title: string;
   ministry: string;
   link: string;
+  playbackLink?: string;
   lyrics: string;
   createdAt: string;
   userId?: string;
